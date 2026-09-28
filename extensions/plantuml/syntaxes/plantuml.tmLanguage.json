@@ -1,0 +1,72 @@
+{
+  "scopeName": "source.plantuml",
+  "patterns": [
+    { "include": "#block-comment" },
+    { "include": "#line-comment" },
+    { "include": "#preprocessor" },
+    { "include": "#diagram-markers" },
+    { "include": "#strings" },
+    { "include": "#keywords" },
+    { "include": "#directions" },
+    { "include": "#arrows" },
+    { "include": "#variables" },
+    { "include": "#colors" },
+    { "include": "#numbers" },
+    { "include": "#punctuation" }
+  ],
+  "repository": {
+    "block-comment": {
+      "name": "comment.block.plantuml",
+      "begin": "/'",
+      "end": "'/"
+    },
+    "line-comment": {
+      "name": "comment.line.apostrophe.plantuml",
+      "match": "^\\s*'.*$"
+    },
+    "preprocessor": {
+      "name": "keyword.control.preprocessor.plantuml",
+      "match": "^\\s*(![\\w]+|%[\\w]+)\\b"
+    },
+    "diagram-markers": {
+      "name": "keyword.control.diagram.plantuml",
+      "match": "(?i)@(?:start|end)[a-z]+\\b"
+    },
+    "strings": {
+      "name": "string.quoted.double.plantuml",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        { "name": "constant.character.escape.plantuml", "match": "\\\\." }
+      ]
+    },
+    "keywords": {
+      "name": "keyword.other.plantuml",
+      "match": "(?i)\\b(actor|participant|boundary|control|entity|database|collections|queue|storage|rectangle|package|node|cloud|component|interface|class|object|state|usecase|artifact|folder|frame|card|circle|diamond|together|title|caption|header|footer|legend|note|hnote|rnote|group|alt|else|opt|loop|par|break|critical|ref|end|activate|deactivate|destroy|create|autonumber|hide|show|skinparam|skinparamlocked|enum|abstract|annotation|namespace|map|as|of|is|on|off)\\b"
+    },
+    "directions": {
+      "name": "keyword.other.direction.plantuml",
+      "match": "(?i)\\b(left|right|up|down|top|bottom|north|south|east|west)\\b"
+    },
+    "arrows": {
+      "name": "keyword.operator.relationship.plantuml",
+      "match": "<[-.ox*#]+>|[-.ox*#]+>|<[-.ox*#]+|[-.ox*#]+|\\.\\.|--|==|~~|\\.\\."
+    },
+    "variables": {
+      "name": "variable.other.plantuml",
+      "match": "\\$[\\w]+|\\b[A-Z][A-Z0-9_]+\\b"
+    },
+    "colors": {
+      "name": "constant.other.color.plantuml",
+      "match": "#(?:[0-9a-fA-F]{3,8}|[A-Za-z][\\w-]*)"
+    },
+    "numbers": {
+      "name": "constant.numeric.plantuml",
+      "match": "\\b\\d+(?:\\.\\d+)?\\b"
+    },
+    "punctuation": {
+      "name": "punctuation.separator.plantuml",
+      "match": "[{}\\[\\](),:;]"
+    }
+  }
+}

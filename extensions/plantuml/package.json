@@ -1,0 +1,126 @@
+{
+  "name": "plantuml",
+  "displayName": "PlantUML",
+  "description": "Coloration syntaxique, complétion, diagnostics et prévisualisation PlantUML, avec prise en charge du Structurizr DSL.",
+  "version": "0.2.0",
+  "publisher": "web-ide",
+  "license": "UNLICENSED",
+  "private": true,
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Visualization",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "plantuml",
+    "structurizr",
+    "dsl",
+    "diagram",
+    "syntax-highlighting",
+    "completion"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "main": "./dist/extension.js",
+  "browser": "./dist/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
+  "activationEvents": [
+    "onLanguage:plantuml",
+    "onLanguage:structurizr",
+    "onCommand:plantuml.preview"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "plantuml",
+        "aliases": [
+          "PlantUML",
+          "plantuml"
+        ],
+        "extensions": [
+          ".puml",
+          ".plantuml",
+          ".pu",
+          ".iuml"
+        ],
+        "configuration": "./language-configuration/plantuml.json"
+      },
+      {
+        "id": "structurizr",
+        "aliases": [
+          "Structurizr DSL",
+          "Structurizr",
+          "structurizr"
+        ],
+        "extensions": [
+          ".dsl",
+          ".structurizr"
+        ],
+        "configuration": "./language-configuration/structurizr.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "plantuml",
+        "scopeName": "source.plantuml",
+        "path": "./syntaxes/plantuml.tmLanguage.json"
+      },
+      {
+        "language": "structurizr",
+        "scopeName": "source.structurizr",
+        "path": "./syntaxes/structurizr.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "plantuml.preview",
+        "title": "PlantUML: Prévisualiser le diagramme",
+        "icon": {
+          "light": "media/eye.svg",
+          "dark": "media/eye-dark.svg"
+        }
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "plantuml.preview",
+          "when": "resourceLangId == plantuml",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "plantuml.preview",
+          "when": "resourceLangId == plantuml",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "copy-assets": "node scripts/copy-assets.mjs",
+    "compile": "npm run copy-assets && npm run typecheck && esbuild src/extension.ts --bundle --platform=browser --format=cjs --external:vscode --outfile=dist/extension.js",
+    "package": "vsce package --allow-missing-repository --no-dependencies --out ../../dist/web-ide-plantuml.vsix",
+    "test": "tsx --test src/languageSupport.test.ts",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist media/plantuml .vscode-test-web",
+    "watch": "esbuild src/extension.ts --bundle --platform=browser --format=cjs --external:vscode --outfile=dist/extension.js --watch",
+    "dev": "npm run compile && vscode-test-web --browser=none --extensionDevelopmentPath=. --host=localhost --port=3000 examples"
+  },
+  "devDependencies": {
+    "@plantuml/core": "^1.2026.8",
+    "@types/vscode": "^1.90.0",
+    "@vscode/test-web": "^0.0.81",
+    "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.7.0"
+  }
+}

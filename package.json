@@ -1,0 +1,28 @@
+{
+  "name": "web-ide",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Environnement local de développement dans VS Code pour le Web",
+  "type": "module",
+  "workspaces": [
+    "extensions/plantuml"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && node dist/server.js",
+    "dev": "tsx watch src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist *.vsix .vscode-web-data",
+    "test:e2e": "playwright test",
+    "plantuml:compile": "npm run compile --workspace=extensions/plantuml",
+    "plantuml:package": "npm run compile --workspace=extensions/plantuml && npm run package --workspace=extensions/plantuml",
+    "plantuml:install": "npm run plantuml:package && node scripts/install-plantuml.mjs",
+    "plantuml:dev": "npm run dev --workspace=extensions/plantuml"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "playwright": "^1.63.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

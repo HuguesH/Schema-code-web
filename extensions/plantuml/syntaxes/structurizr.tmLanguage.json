@@ -1,0 +1,62 @@
+{
+  "scopeName": "source.structurizr",
+  "patterns": [
+    { "include": "#block-comment" },
+    { "include": "#line-comment" },
+    { "include": "#strings" },
+    { "include": "#directives" },
+    { "include": "#keywords" },
+    { "include": "#booleans" },
+    { "include": "#relationship" },
+    { "include": "#variables" },
+    { "include": "#numbers" },
+    { "include": "#punctuation" }
+  ],
+  "repository": {
+    "block-comment": {
+      "name": "comment.block.structurizr",
+      "begin": "/\\*",
+      "end": "\\*/"
+    },
+    "line-comment": {
+      "name": "comment.line.double-slash.structurizr",
+      "match": "^\\s*//.*$"
+    },
+    "strings": {
+      "name": "string.quoted.double.structurizr",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        { "name": "constant.character.escape.structurizr", "match": "\\\\." }
+      ]
+    },
+    "directives": {
+      "name": "keyword.control.directive.structurizr",
+      "match": "^\\s*![\\w]+\\b"
+    },
+    "keywords": {
+      "name": "keyword.other.structurizr",
+      "match": "\\b(workspace|model|views|properties|person|softwareSystem|container|component|deploymentEnvironment|deploymentNode|infrastructureNode|softwareSystemInstance|containerInstance|element|relationship|group|enterprise|systemLandscape|systemContext|container|component|deployment|dynamic|filtered|custom|image|theme|styles|branding|terminology|documentation|perspectives|include|exclude|autolayout|automaticLayout|title|description|url|technology|tags|perspective|perspectives|elementStyle|relationshipStyle|icon|shape|background|color|colour|stroke|fontSize|width|height|opacity|border|routing|position|scope|visibility|true|false|null)\\b"
+    },
+    "booleans": {
+      "name": "constant.language.boolean.structurizr",
+      "match": "\\b(true|false|null)\\b"
+    },
+    "relationship": {
+      "name": "keyword.operator.relationship.structurizr",
+      "match": "->"
+    },
+    "variables": {
+      "name": "variable.other.structurizr",
+      "match": "\\$[\\w]+|\\b[a-zA-Z_][\\w]*(?=\\s*=)"
+    },
+    "numbers": {
+      "name": "constant.numeric.structurizr",
+      "match": "\\b\\d+(?:\\.\\d+)?\\b"
+    },
+    "punctuation": {
+      "name": "punctuation.separator.structurizr",
+      "match": "[{}\\[\\](),:;=]"
+    }
+  }
+}
