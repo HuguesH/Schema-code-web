@@ -4,6 +4,8 @@ Extension VS Code Web pour les diagrammes PlantUML et les modèles Structurizr D
 
 Ouvrez la prévisualisation avec l'icône en forme d'œil dans la barre de titre de l'éditeur ou via **clic droit sur un fichier PlantUML > PlantUML: Prévisualiser le diagramme** dans l'explorateur. La prévisualisation suit les modifications du document ouvert.
 
+La barre d'outils de la prévisualisation permet de zoomer, de réinitialiser le zoom et d'exporter le diagramme rendu au format SVG.
+
 Les diagnostics détectent notamment les marqueurs PlantUML manquants ou mal appariés, les chaînes et délimiteurs non terminés, ainsi que les chaînes et accolades incorrectes dans le DSL Structurizr. La complétion propose les constructions courantes des deux langages ; elle ne remplace pas une validation complète par le moteur PlantUML ou le parseur Structurizr.
 
 ## Développement

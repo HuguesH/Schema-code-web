@@ -5,9 +5,9 @@ import {
   type DiagramLanguage
 } from "./languageSupport";
 
-interface PreviewMessage {
-  type: "ready";
-}
+type PreviewMessage =
+  | { type: "ready" }
+  | { type: "exportSvg"; svg: string };
 
 interface Preview {
   panel: vscode.WebviewPanel;
@@ -157,13 +157,19 @@ function showPreview(
   const preview: Preview = { panel, document, ready: false };
   previews.set(key, preview);
 
-  panel.webview.onDidReceiveMessage((message: PreviewMessage) => {
+  panel.webview.onDidReceiveMessage(async (message: PreviewMessage) => {
     if (message?.type === "ready") {
       preview.ready = true;
       void panel.webview.postMessage({
         type: "render",
         source: document.getText()
       });
+    } else if (
+      message?.type === "exportSvg" &&
+      typeof message.svg === "string" &&
+      message.svg.length > 0
+    ) {
+      await exportSvg(document, message.svg);
     }
   });
   panel.webview.html = createWebviewHtml(context, panel.webview);
@@ -171,6 +177,33 @@ function showPreview(
   panel.onDidDispose(() => {
     previews.delete(key);
   });
+}
+
+async function exportSvg(document: vscode.TextDocument, svg: string): Promise<void> {
+  const stem = document.uri.path.split("/").pop()?.replace(/\.[^.]+$/, "") || "diagramme";
+  const filename = `${stem}.svg`;
+  const lastSlash = document.uri.path.lastIndexOf("/");
+  const defaultUri = document.uri.scheme === "file"
+    ? document.uri.with({
+        path: `${document.uri.path.slice(0, lastSlash + 1)}${filename}`
+      })
+    : undefined;
+
+  try {
+    const target = await vscode.window.showSaveDialog({
+      defaultUri,
+      saveLabel: "Exporter",
+      filters: { SVG: ["svg"] }
+    });
+    if (!target) return;
+
+    await vscode.workspace.fs.writeFile(target, new TextEncoder().encode(svg));
+    void vscode.window.showInformationMessage("Diagramme exporté au format SVG.");
+  } catch (error) {
+    void vscode.window.showErrorMessage(
+      `Impossible d'exporter le diagramme SVG : ${errorMessage(error)}`
+    );
+  }
 }
 
 function createWebviewHtml(
@@ -199,24 +232,62 @@ function createWebviewHtml(
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} data:; style-src 'unsafe-inline'; script-src 'nonce-${nonce}' ${webview.cspSource};">
   <title>Prévisualisation PlantUML</title>
   <style>
-    body { padding: 1rem; color: var(--vscode-editor-foreground); font-family: var(--vscode-font-family); }
+    body { box-sizing: border-box; display: flex; flex-direction: column; height: 100vh; margin: 0; padding: 1rem; color: var(--vscode-editor-foreground); font-family: var(--vscode-font-family); }
+    #toolbar { display: flex; align-items: center; gap: 0.4rem; padding-bottom: 0.75rem; }
+    button { color: var(--vscode-button-foreground); background: var(--vscode-button-background); border: 0; border-radius: 2px; padding: 0.35rem 0.6rem; cursor: pointer; }
+    button:hover { background: var(--vscode-button-hoverBackground); }
+    button:disabled { opacity: 0.5; cursor: default; }
+    #zoom-level { min-width: 3.5rem; color: var(--vscode-descriptionForeground); text-align: center; }
     #status { color: var(--vscode-descriptionForeground); white-space: pre-wrap; }
-    #output { overflow: auto; }
-    #output svg { display: block; max-width: 100%; height: auto; margin: 1rem auto; }
+    #output { flex: 1; min-height: 0; overflow: auto; }
+    #diagram { width: max-content; min-width: 100%; }
+    #diagram svg { display: block; max-width: none; height: auto; margin: 1rem auto; }
   </style>
   <script nonce="${nonce}">window.PLANTUML_STDLIB_BASE = ${JSON.stringify(`${vendorUri}/`)};</script>
   <script nonce="${nonce}" src="${vizUri}"></script>
 </head>
 <body>
+  <nav id="toolbar" aria-label="Outils de prévisualisation">
+    <button id="zoom-out" type="button" title="Zoom arrière" aria-label="Zoom arrière">−</button>
+    <span id="zoom-level" aria-live="polite">100 %</span>
+    <button id="zoom-in" type="button" title="Zoom avant" aria-label="Zoom avant">+</button>
+    <button id="zoom-reset" type="button" title="Réinitialiser le zoom">Réinitialiser</button>
+    <button id="export-svg" type="button" title="Exporter le diagramme au format SVG" disabled>Exporter en SVG</button>
+  </nav>
   <p id="status" role="status">Chargement du moteur PlantUML…</p>
-  <main id="output"></main>
+  <main id="output"><div id="diagram"></div></main>
   <script type="module" nonce="${nonce}">
     import { renderToString } from ${JSON.stringify(rendererUri)};
     const vscode = acquireVsCodeApi();
     const status = document.getElementById("status");
-    const output = document.getElementById("output");
+    const diagram = document.getElementById("diagram");
+    const zoomLevel = document.getElementById("zoom-level");
+    const exportButton = document.getElementById("export-svg");
+    let zoom = 1;
     let latestVersion = 0;
     let queue = Promise.resolve();
+
+    function updateZoom(nextZoom) {
+      zoom = Math.min(3, Math.max(0.2, nextZoom));
+      diagram.style.zoom = String(zoom);
+      zoomLevel.textContent = Math.round(zoom * 100) + " %";
+    }
+
+    document.getElementById("zoom-in").addEventListener("click", () => updateZoom(zoom + 0.2));
+    document.getElementById("zoom-out").addEventListener("click", () => updateZoom(zoom - 0.2));
+    document.getElementById("zoom-reset").addEventListener("click", () => updateZoom(1));
+    exportButton.addEventListener("click", () => {
+      const svg = diagram.querySelector("svg");
+      if (!svg) return;
+      const copy = svg.cloneNode(true);
+      if (!copy.hasAttribute("xmlns")) {
+        copy.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      }
+      vscode.postMessage({
+        type: "exportSvg",
+        svg: new XMLSerializer().serializeToString(copy)
+      });
+    });
 
     function render(source, version) {
       return new Promise((resolve, reject) => {
@@ -227,11 +298,13 @@ function createWebviewHtml(
         );
       }).then((svg) => {
         if (version !== latestVersion) return;
-        output.innerHTML = svg;
+        diagram.innerHTML = svg;
+        exportButton.disabled = !diagram.querySelector("svg");
         status.textContent = "";
       }).catch((error) => {
         if (version !== latestVersion) return;
-        output.replaceChildren();
+        diagram.replaceChildren();
+        exportButton.disabled = true;
         status.textContent = "Erreur PlantUML : " + String(error);
       });
     }
