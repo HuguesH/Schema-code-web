@@ -2,6 +2,7 @@
 actor Utilisateur
 participant "Extension PlantUML" as Extension
 
+
 Utilisateur -> Extension: Ouvrir la prévisualisation
 Extension --> Utilisateur: Afficher le diagramme
 @enduml

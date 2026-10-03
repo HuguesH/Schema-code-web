@@ -4,6 +4,8 @@ import {
   validateLanguage,
   type DiagramLanguage
 } from "./languageSupport";
+import { expandIncludes } from "./includeResolver";
+import { createSpriteListSvg } from "./spriteList";
 
 type PreviewMessage =
   | { type: "ready" }
@@ -13,6 +15,9 @@ interface Preview {
   panel: vscode.WebviewPanel;
   document: vscode.TextDocument;
   ready: boolean;
+  renderVersion: number;
+  dependencies: Set<string>;
+  includeWatchers: Map<string, vscode.Disposable>;
 }
 
 const previews = new Map<string, Preview>();
@@ -44,12 +49,15 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     ),
     vscode.workspace.onDidChangeTextDocument(({ document }) => {
-      const preview = previews.get(document.uri.toString());
-      if (preview?.ready) {
-        void preview.panel.webview.postMessage({
-          type: "render",
-          source: document.getText()
-        });
+      const changedUri = document.uri.toString();
+      for (const preview of previews.values()) {
+        if (
+          preview.ready &&
+          (preview.document.uri.toString() === changedUri ||
+            preview.dependencies.has(changedUri))
+        ) {
+          void updatePreview(preview, preview.document.getText());
+        }
       }
     })
   );
@@ -131,6 +139,11 @@ function registerLanguageSupport(context: vscode.ExtensionContext): void {
 }
 
 export function deactivate(): void {
+  for (const preview of previews.values()) {
+    preview.renderVersion += 1;
+    preview.ready = false;
+    for (const watcher of preview.includeWatchers.values()) watcher.dispose();
+  }
   previews.clear();
 }
 
@@ -154,16 +167,20 @@ function showPreview(
       localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, "media", "plantuml")]
     }
   );
-  const preview: Preview = { panel, document, ready: false };
+  const preview: Preview = {
+    panel,
+    document,
+    ready: false,
+    renderVersion: 0,
+    dependencies: new Set(),
+    includeWatchers: new Map()
+  };
   previews.set(key, preview);
 
   panel.webview.onDidReceiveMessage(async (message: PreviewMessage) => {
     if (message?.type === "ready") {
       preview.ready = true;
-      void panel.webview.postMessage({
-        type: "render",
-        source: document.getText()
-      });
+      void updatePreview(preview, document.getText());
     } else if (
       message?.type === "exportSvg" &&
       typeof message.svg === "string" &&
@@ -175,8 +192,119 @@ function showPreview(
   panel.webview.html = createWebviewHtml(context, panel.webview);
 
   panel.onDidDispose(() => {
+    preview.ready = false;
+    preview.renderVersion += 1;
+    for (const watcher of preview.includeWatchers.values()) watcher.dispose();
+    preview.includeWatchers.clear();
     previews.delete(key);
   });
+}
+
+async function updatePreview(preview: Preview, source: string): Promise<void> {
+  const version = ++preview.renderVersion;
+  const dependencies = new Set<string>();
+  const host = {
+    resolve: (parentUri: string, includePath: string): string =>
+      resolveWorkspaceInclude(parentUri, includePath),
+    read: async (uri: string): Promise<string> => {
+      const content = await vscode.workspace.fs.readFile(vscode.Uri.parse(uri));
+      return new TextDecoder().decode(content);
+    }
+  };
+
+  try {
+    const expandedSource = await expandIncludes(
+      source,
+      preview.document.uri.toString(),
+      host,
+      (uri) => dependencies.add(uri)
+    );
+    if (version !== preview.renderVersion) return;
+    preview.dependencies = dependencies;
+    updateIncludeWatchers(preview, dependencies);
+    const spriteListSvg = createSpriteListSvg(expandedSource);
+    if (spriteListSvg) {
+      void preview.panel.webview.postMessage({
+        type: "renderSvg",
+        svg: spriteListSvg
+      });
+      return;
+    }
+    void preview.panel.webview.postMessage({
+      type: "render",
+      source: expandedSource
+    });
+  } catch (error) {
+    if (version !== preview.renderVersion) return;
+    preview.dependencies = dependencies;
+    updateIncludeWatchers(preview, dependencies);
+    void preview.panel.webview.postMessage({
+      type: "renderError",
+      error: errorMessage(error)
+    });
+  }
+}
+
+function resolveWorkspaceInclude(parentUri: string, includePath: string): string {
+  if (
+    !includePath ||
+    includePath.startsWith("/") ||
+    /^[a-z][a-z\d+.-]*:/i.test(includePath)
+  ) {
+    throw new Error(`Le chemin d'inclusion doit être relatif : « ${includePath} ».`);
+  }
+
+  const parent = vscode.Uri.parse(parentUri);
+  const workspaceFolder = vscode.workspace.getWorkspaceFolder(parent);
+  if (!workspaceFolder) {
+    throw new Error("Les inclusions locales nécessitent un fichier dans le workspace.");
+  }
+
+  const directory = parent.with({
+    path: parent.path.slice(0, parent.path.lastIndexOf("/") + 1)
+  });
+  const included = vscode.Uri.joinPath(directory, ...includePath.split(/[\\/]/));
+  if (!vscode.workspace.getWorkspaceFolder(included)) {
+    throw new Error("Le chemin d'inclusion sort du dossier du workspace.");
+  }
+  return included.toString();
+}
+
+function updateIncludeWatchers(
+  preview: Preview,
+  dependencies: Set<string>
+): void {
+  for (const [uri, watcher] of preview.includeWatchers) {
+    if (!dependencies.has(uri)) {
+      watcher.dispose();
+      preview.includeWatchers.delete(uri);
+    }
+  }
+
+  for (const uri of dependencies) {
+    if (preview.includeWatchers.has(uri)) continue;
+    const includeUri = vscode.Uri.parse(uri);
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(includeUri);
+    if (!workspaceFolder) continue;
+
+    const rootPath = workspaceFolder.uri.path.replace(/\/+$/, "");
+    const relativePath = includeUri.path.slice(rootPath.length + 1);
+    const watcher = vscode.workspace.createFileSystemWatcher(
+      new vscode.RelativePattern(workspaceFolder, relativePath)
+    );
+    const refresh = (): void => {
+      if (preview.ready) void updatePreview(preview, preview.document.getText());
+    };
+    preview.includeWatchers.set(
+      uri,
+      vscode.Disposable.from(
+        watcher,
+        watcher.onDidChange(refresh),
+        watcher.onDidCreate(refresh),
+        watcher.onDidDelete(refresh)
+      )
+    );
+  }
 }
 
 async function exportSvg(document: vscode.TextDocument, svg: string): Promise<void> {
@@ -309,7 +437,25 @@ function createWebviewHtml(
       });
     }
 
+    function displaySvg(svg) {
+      diagram.innerHTML = svg;
+      exportButton.disabled = !diagram.querySelector("svg");
+      status.textContent = "";
+    }
+
     window.addEventListener("message", (event) => {
+      if (event.data?.type === "renderError" && typeof event.data.error === "string") {
+        latestVersion += 1;
+        diagram.replaceChildren();
+        exportButton.disabled = true;
+        status.textContent = "Erreur d'inclusion PlantUML : " + event.data.error;
+        return;
+      }
+      if (event.data?.type === "renderSvg" && typeof event.data.svg === "string") {
+        latestVersion += 1;
+        displaySvg(event.data.svg);
+        return;
+      }
       if (event.data?.type !== "render" || typeof event.data.source !== "string") return;
       const version = ++latestVersion;
       const source = event.data.source;

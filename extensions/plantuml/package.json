@@ -109,7 +109,7 @@
     "copy-assets": "node scripts/copy-assets.mjs",
     "compile": "npm run copy-assets && npm run typecheck && esbuild src/extension.ts --bundle --platform=browser --format=cjs --external:vscode --outfile=dist/extension.js",
     "package": "vsce package --allow-missing-repository --no-dependencies --out ../../dist/web-ide-plantuml.vsix",
-    "test": "tsx --test src/languageSupport.test.ts",
+    "test": "tsx --test src/languageSupport.test.ts src/includeResolver.test.ts src/spriteList.test.ts",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist media/plantuml .vscode-test-web",
     "watch": "esbuild src/extension.ts --bundle --platform=browser --format=cjs --external:vscode --outfile=dist/extension.js --watch",

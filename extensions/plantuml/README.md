@@ -6,6 +6,10 @@ Ouvrez la prévisualisation avec l'icône en forme d'œil dans la barre de titre
 
 La barre d'outils de la prévisualisation permet de zoomer, de réinitialiser le zoom et d'exporter le diagramme rendu au format SVG.
 
+Les directives `!include`, `!include_once` et `!include_many` sont développées en cascade depuis le système de fichiers du workspace, avec `vscode.workspace.fs`. Les chemins sont relatifs au fichier qui contient la directive ; les fichiers inclus sont surveillés et la prévisualisation est actualisée lorsqu'ils changent. Pour un fichier contenant plusieurs diagrammes, le suffixe `!0`, `!1`, etc. sélectionne le diagramme à inclure ; le bloc sélectionné est inséré sans ses marqueurs `@startuml`/`@enduml`. Les chemins qui sortent du workspace et les inclusions distantes `!includeurl` sont refusés. Les inclusions de la bibliothèque PlantUML comme `!include <C4/C4_Context>` restent gérées par le moteur.
+
+La commande `listsprites` affiche dans la prévisualisation une planche SVG des sprites SVG définis dans le diagramme et ses includes, au lieu de transmettre cette commande ignorée par le moteur JavaScript à son analyseur de diagrammes.
+
 Les diagnostics détectent notamment les marqueurs PlantUML manquants ou mal appariés, les chaînes et délimiteurs non terminés, ainsi que les chaînes et accolades incorrectes dans le DSL Structurizr. La complétion propose les constructions courantes des deux langages ; elle ne remplace pas une validation complète par le moteur PlantUML ou le parseur Structurizr.
 
 ## Développement
