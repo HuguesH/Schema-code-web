@@ -1,0 +1,28 @@
+@startuml sequence-idp
+actor       user
+participant browser
+participant serverAPP
+participant serverIDP
+
+activate user
+user -> browser: accesURL
+activate browser
+browser -> serverAPP: requeteHttp
+activate serverAPP
+return redirectHttpIDP
+browser -> serverIDP: requeteHttp
+activate serverIDP
+return mireHtml
+return  dessineMire
+
+
+user -> browser : credentials
+activate browser
+browser -> serverIDP: auth
+activate serverIDP
+return redirectHttpAPP
+browser -> serverAPP: requeteHttp-token
+activate serverAPP
+return reponseHtml
+return dessineAPP
+@enduml

@@ -1,0 +1,38 @@
+@startuml sequence-idp-with-logo
+!include drawio-selected-sprite.puml!0
+!include softwares-sprites.puml!0
+!include skinparams.puml
+
+
+
+participant "<$user>\n User" as user
+participant "<$g-chrome>\n Browser" as browser
+participant "<$python>\n Web Service" as serverAPP
+participant "<$idp-keycloak>\n IDP KC" as serverIDP
+
+autonumber
+
+
+activate user
+user -> browser: accesURL
+activate browser
+browser -> serverAPP: requeteHttp
+activate serverAPP
+return redirectHttpIDP
+browser -> serverIDP: requeteHttp
+activate serverIDP
+return mireHtml
+return  dessineMire
+
+
+
+user -> browser : credentials
+activate browser
+browser -> serverIDP: auth
+activate serverIDP
+return redirectHttpAPP
+browser -> serverAPP: requeteHttp-token
+activate serverAPP
+return reponseHtml
+return dessineAPP
+@enduml

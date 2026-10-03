@@ -1,0 +1,5 @@
+@startuml listsprites
+!include drawio-selected-sprite.puml!0
+!include softwares-sprites.puml!0
+listsprites
+@enduml
