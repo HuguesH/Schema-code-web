@@ -105,6 +105,40 @@ test("respecte include_once et include_many et laisse le standard PlantUML au mo
   );
 });
 
+test("résout les includes standards entre chevrons vers les fichiers locaux", async () => {
+  const dependencies: string[] = [];
+  const result = await expandIncludes(
+    "@startuml\n!include <azure/AzureCommon>\n@enduml",
+    "/project/main.puml",
+    {
+      ...createHost({
+        "/project/azure/AzureCommon.puml": "sprite $azure <svg/>"
+      }),
+      resolveStandard: async (includePath) => {
+        assert.equal(includePath, "azure/AzureCommon");
+        return "/project/azure/AzureCommon.puml";
+      }
+    },
+    (uri) => dependencies.push(uri)
+  );
+
+  assert.equal(result, "@startuml\nsprite $azure <svg/>\n@enduml");
+  assert.deepEqual(dependencies, ["/project/azure/AzureCommon.puml"]);
+});
+
+test("laisse les includes standards sans fichier local au moteur PlantUML", async () => {
+  const result = await expandIncludes(
+    "!include <C4/C4_Context>",
+    "/project/main.puml",
+    {
+      ...createHost({}),
+      resolveStandard: async () => undefined
+    }
+  );
+
+  assert.equal(result, "!include <C4/C4_Context>");
+});
+
 test("signale une inclusion introuvable et les cycles", async () => {
   await assert.rejects(
     expandIncludes("!include missing.puml", "/project/main.puml", createHost({})),

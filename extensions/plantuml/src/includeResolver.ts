@@ -1,5 +1,6 @@
 export interface IncludeHost {
   resolve(parentUri: string, includePath: string): string;
+  resolveStandard?(includePath: string): Promise<string | undefined>;
   read(uri: string): Promise<string>;
 }
 
@@ -38,12 +39,16 @@ export async function expandIncludes(
         throw new Error(`Directive d'inclusion invalide : ${line.trim()}`);
       }
 
-      const includePath = match[2] ?? match[3] ?? match[4];
-      if (includePath.startsWith("<") && includePath.endsWith(">")) {
-        expandedLines.push(line);
-        continue;
+      const rawIncludePath = match[2] ?? match[3] ?? match[4];
+      const isStandardInclude =
+        rawIncludePath.startsWith("<") && rawIncludePath.endsWith(">");
+      if (rawIncludePath.startsWith("<") !== rawIncludePath.endsWith(">")) {
+        throw new Error(`Chemin d'inclusion invalide : « ${rawIncludePath} ».`);
       }
-      if (includePath.startsWith("<") || includePath.endsWith(">")) {
+      const includePath = isStandardInclude
+        ? rawIncludePath.slice(1, -1)
+        : rawIncludePath;
+      if (!includePath) {
         throw new Error(`Chemin d'inclusion invalide : « ${includePath} ».`);
       }
 
@@ -53,7 +58,13 @@ export async function expandIncludes(
           : match[1]?.toLowerCase() === "_many"
             ? "include_many"
             : "include";
-      const includedUri = host.resolve(currentUri, includePath);
+      const includedUri = isStandardInclude
+        ? await host.resolveStandard?.(includePath)
+        : host.resolve(currentUri, includePath);
+      if (!includedUri) {
+        expandedLines.push(line);
+        continue;
+      }
       onDependency?.(includedUri);
 
       if (kind === "include_once" && includedOnce.has(includedUri)) {

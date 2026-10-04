@@ -206,6 +206,8 @@ async function updatePreview(preview: Preview, source: string): Promise<void> {
   const host = {
     resolve: (parentUri: string, includePath: string): string =>
       resolveWorkspaceInclude(parentUri, includePath),
+    resolveStandard: (includePath: string): Promise<string | undefined> =>
+      resolveWorkspaceStandardInclude(includePath),
     read: async (uri: string): Promise<string> => {
       const content = await vscode.workspace.fs.readFile(vscode.Uri.parse(uri));
       return new TextDecoder().decode(content);
@@ -268,6 +270,44 @@ function resolveWorkspaceInclude(parentUri: string, includePath: string): string
     throw new Error("Le chemin d'inclusion sort du dossier du workspace.");
   }
   return included.toString();
+}
+
+async function resolveWorkspaceStandardInclude(
+  includePath: string
+): Promise<string | undefined> {
+  if (
+    !includePath ||
+    includePath.startsWith("/") ||
+    /^[a-z][a-z\d+.-]*:/i.test(includePath) ||
+    includePath.split(/[\\/]/).some((segment) => segment === ".." || segment === "")
+  ) {
+    throw new Error(`Chemin d'inclusion standard invalide : « ${includePath} ».`);
+  }
+
+  const extensions = /\.[^/\\]+$/.test(includePath)
+    ? [""]
+    : ["", ".puml", ".plantuml", ".pu", ".iuml"];
+  for (const workspaceFolder of vscode.workspace.workspaceFolders ?? []) {
+    for (const extension of extensions) {
+      const candidate = vscode.Uri.joinPath(
+        workspaceFolder.uri,
+        ...`${includePath}${extension}`.split(/[\\/]/)
+      );
+      try {
+        const stat = await vscode.workspace.fs.stat(candidate);
+        if (stat.type & vscode.FileType.File) return candidate.toString();
+      } catch (error) {
+        if (
+          error instanceof vscode.FileSystemError &&
+          error.code === "FileNotFound"
+        ) {
+          continue;
+        }
+        throw error;
+      }
+    }
+  }
+  return undefined;
 }
 
 function updateIncludeWatchers(
@@ -357,7 +397,7 @@ function createWebviewHtml(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} data:; style-src 'unsafe-inline'; script-src 'nonce-${nonce}' ${webview.cspSource};">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} data:; style-src 'unsafe-inline'; script-src 'nonce-${nonce}' ${webview.cspSource} 'wasm-unsafe-eval';">
   <title>Prévisualisation PlantUML</title>
   <style>
     body { box-sizing: border-box; display: flex; flex-direction: column; height: 100vh; margin: 0; padding: 1rem; color: var(--vscode-editor-foreground); font-family: var(--vscode-font-family); }
