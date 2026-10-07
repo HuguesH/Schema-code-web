@@ -1,5 +1,7 @@
 # Web-IDE
 
+![Logo C4, UML et Structurizr](assets/c4-uml-stru.svg)
+
 Environnement local de développement avec VS Code pour le Web, piloté par Node.js, npm et TypeScript. Le serveur ouvre le dossier du projet sur le système de fichiers local : les modifications sont enregistrées normalement.
 
 ## Prérequis
@@ -51,4 +53,4 @@ npm run test:e2e
 
 Ils démarrent automatiquement le serveur de test VS Code Web sur le port 3000. Pour tester le profil installé du serveur principal, démarrez `npm start`, puis lancez `PLAYWRIGHT_BASE_URL=http://127.0.0.1:8000 npm run test:e2e`. Pour utiliser un Chromium déjà installé, définissez `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` avec le chemin de son exécutable. Les résultats Playwright sont écrits dans `test-results/` et `playwright-report/`, ignorés par Git.
 
-Le profil `.vscode-web-data/` contient aussi l'extension installée `web-ide.plantuml` et le pack français. Pour choisir le français dans l'interface, ouvrez **Extensions**, sélectionnez **French Language Pack**, cliquez sur **Set Display Language**, puis rechargez la page. Si VS Code affiche **Restricted Mode**, faites confiance au dossier du projet pour activer l'extension.
+Le profil `.vscode-web-data/` contient aussi l'extension installée `web-ide.struc4uml` et le pack français. Pour choisir le français dans l'interface, ouvrez **Extensions**, sélectionnez **French Language Pack**, cliquez sur **Set Display Language**, puis rechargez la page. Si VS Code affiche **Restricted Mode**, faites confiance au dossier du projet pour activer l'extension.

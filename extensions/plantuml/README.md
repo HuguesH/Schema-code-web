@@ -1,6 +1,8 @@
-# PlantUML pour VS Code Web
+# struC4UML pour VS Code Web
 
-Extension VS Code Web pour les diagrammes PlantUML et les modèles Structurizr DSL. Elle reconnaît les fichiers `.puml`, `.plantuml`, `.pu` et `.iuml`, ainsi que les fichiers `.dsl` et `.structurizr`. Les deux langages bénéficient de la coloration syntaxique, de complétions et de diagnostics structurels dans l'éditeur. PlantUML utilise en plus le moteur JavaScript officiel `@plantuml/core` pour rendre les diagrammes localement dans une vue navigateur, sans serveur Java ni requête vers un serveur PlantUML.
+Extension VS Code Web struC4UML pour les diagrammes PlantUML et les modèles Structurizr DSL. Elle reconnaît les fichiers `.puml`, `.plantuml`, `.pu` et `.iuml`, ainsi que les fichiers `.dsl` et `.structurizr`. Les deux langages bénéficient de la coloration syntaxique, de complétions et de diagnostics structurels dans l'éditeur. PlantUML utilise en plus le moteur JavaScript officiel `@plantuml/core` pour rendre les diagrammes localement dans une vue navigateur, sans serveur Java ni requête vers un serveur PlantUML.
+
+Le code propre à l'extension est distribué sous licence GNU GPL version 3. Le texte de la licence est fourni dans le fichier `LICENSE`. Les bibliothèques et autres ressources tierces gardent leurs licences respectives ; voir `media/plantuml/THIRD-PARTY-NOTICES.md`.
 
 Ouvrez la prévisualisation avec l'icône en forme d'œil dans la barre de titre de l'éditeur ou via **clic droit sur un fichier PlantUML > PlantUML: Prévisualiser le diagramme** dans l'explorateur. La prévisualisation suit les modifications du document ouvert.
 

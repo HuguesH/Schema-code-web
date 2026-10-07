@@ -14,7 +14,7 @@ const cli = configuredCli
     : "code";
 const workspace = process.cwd();
 const serverData = resolve(workspace, ".vscode-web-data");
-const vsix = resolve(workspace, "dist/web-ide-plantuml.vsix");
+const vsix = resolve(workspace, "dist/web-ide-struc4uml.vsix");
 
 const install = spawn(
   cli,

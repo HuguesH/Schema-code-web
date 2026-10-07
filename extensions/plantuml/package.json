@@ -1,10 +1,11 @@
 {
-  "name": "plantuml",
-  "displayName": "PlantUML",
+  "name": "struc4uml",
+  "displayName": "struC4UML",
   "description": "Coloration syntaxique, complétion, diagnostics et prévisualisation PlantUML, avec prise en charge du Structurizr DSL.",
   "version": "0.2.0",
   "publisher": "web-ide",
-  "license": "UNLICENSED",
+  "icon": "media/extension-icon.png",
+  "license": "GPL-3.0-only",
   "private": true,
   "engines": {
     "vscode": "^1.90.0"
@@ -108,7 +109,7 @@
   "scripts": {
     "copy-assets": "node scripts/copy-assets.mjs",
     "compile": "npm run copy-assets && npm run typecheck && esbuild src/extension.ts --bundle --platform=browser --format=cjs --external:vscode --outfile=dist/extension.js",
-    "package": "vsce package --allow-missing-repository --no-dependencies --out ../../dist/web-ide-plantuml.vsix",
+    "package": "vsce package --allow-missing-repository --no-dependencies --readme-path README.user.md --out ../../dist/web-ide-struc4uml.vsix",
     "test": "tsx --test src/languageSupport.test.ts src/includeResolver.test.ts src/spriteList.test.ts src/standardLibraryAssets.test.ts",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist media/plantuml .vscode-test-web",

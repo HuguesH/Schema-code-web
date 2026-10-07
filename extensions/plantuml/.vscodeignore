@@ -1,7 +1,7 @@
 **
 !package.json
-!README.md
-!readme.md
+!README.user.md
+!LICENSE
 !dist/**
 !media/**
 !syntaxes/**
